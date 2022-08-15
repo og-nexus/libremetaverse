@@ -37,7 +37,7 @@ namespace OpenMetaverse.Http
     private const string REQUEST_CONTENT_TYPE = "application/llsd+xml";
 
     /// <summary>Viewer defauls to 30 for main grid, 60 for others</summary>
-    public const int REQUEST_TIMEOUT = 60 * 1000;
+    public const int REQUEST_TIMEOUT = 25 * 1000;
 
     /// <summary>For exponential backoff on error.</summary>
     public const int REQUEST_BACKOFF_SECONDS = 15 * 1000; // 15 seconds start
@@ -166,40 +166,36 @@ namespace OpenMetaverse.Http
             _Dead = true;
             break;
 
-          // this doesn't seem to provide value
-          // we don't understand why the client is being rejected and we don't know how to fix it
-          // yet everything just works as usual, if we just ignore it
-          // TODO: find out why tf this was added and how to adhere to it
-          //   case HttpStatusCode.InternalServerError:
-          //     // As per LL's instructions, we ought to consider this a
-          //     // 'request to close client' (gwyneth 20220413)
-          //     Logger.Log($"Grid sent a {code} at {_Address}, closing connection", Helpers.LogLevel.Debug);
+          case HttpStatusCode.InternalServerError:
+            // As per LL's instructions, we ought to consider this a
+            // 'request to close client' (gwyneth 20220413)
+            Logger.Log($"Grid sent a {code} at {_Address}, closing connection", Helpers.LogLevel.Debug);
 
-          //     // ... but do we happen to have an InnerException? Log it!
-          //     if (error.InnerException != null)
-          //     {
-          //       // unravel the whole inner error message, so we finally figure out what it is!
-          //       // (gwyneth 20220414)
-          //       Logger.Log($"Unrecognized internal caps exception from {_Address}: '{error.InnerException.Message}'", Helpers.LogLevel.Warning);
-          //       Logger.Log("\nMessage ---\n{error.Message}", Helpers.LogLevel.Warning);
-          //       Logger.Log("\nHelpLink ---\n{ex.HelpLink}", Helpers.LogLevel.Warning);
-          //       Logger.Log("\nSource ---\n{error.Source}", Helpers.LogLevel.Warning);
-          //       Logger.Log("\nStackTrace ---\n{error.StackTrace}", Helpers.LogLevel.Warning);
-          //       Logger.Log("\nTargetSite ---\n{error.TargetSite}", Helpers.LogLevel.Warning);
-          //       if (error.Data.Count > 0)
-          //       {
-          //         Logger.Log("  Extra details:", Helpers.LogLevel.Warning);
-          //         foreach (DictionaryEntry de in error.Data)
-          //           Logger.Log(String.Format("    Key: {0,-20}      Value: '{1}'",
-          //             de.Key, de.Value),
-          //             Helpers.LogLevel.Warning);
-          //       }
-          //       // but we'll nevertheless close this connection (gwyneth 20220414)
-          //     }
+            // ... but do we happen to have an InnerException? Log it!
+            if (error.InnerException != null)
+            {
+              // unravel the whole inner error message, so we finally figure out what it is!
+              // (gwyneth 20220414)
+              Logger.Log($"Unrecognized internal caps exception from {_Address}: '{error.InnerException.Message}'", Helpers.LogLevel.Warning);
+              Logger.Log("\nMessage ---\n{error.Message}", Helpers.LogLevel.Warning);
+              Logger.Log("\nHelpLink ---\n{ex.HelpLink}", Helpers.LogLevel.Warning);
+              Logger.Log("\nSource ---\n{error.Source}", Helpers.LogLevel.Warning);
+              Logger.Log("\nStackTrace ---\n{error.StackTrace}", Helpers.LogLevel.Warning);
+              Logger.Log("\nTargetSite ---\n{error.TargetSite}", Helpers.LogLevel.Warning);
+              if (error.Data.Count > 0)
+              {
+                Logger.Log("  Extra details:", Helpers.LogLevel.Warning);
+                foreach (DictionaryEntry de in error.Data)
+                  Logger.Log(String.Format("    Key: {0,-20}      Value: '{1}'",
+                    de.Key, de.Value),
+                    Helpers.LogLevel.Warning);
+              }
+              // but we'll nevertheless close this connection (gwyneth 20220414)
+            }
 
-          //     _Running = false;
-          //     _Dead = true;
-          //     break;
+            _Running = false;
+            _Dead = true;
+            break;
           case HttpStatusCode.BadGateway:
             // This is not good (server) protocol design, but it's normal.
             // The EventQueue server is a proxy that connects to a Squid
@@ -283,6 +279,11 @@ namespace OpenMetaverse.Http
           _Running = false;
           Logger.DebugLog("Sent event queue shutdown message");
         }
+      }
+      else if (_Dead)
+      {
+        // We're dead, so we can just close the connection
+        Logger.DebugLog("Event queue is dead, closing connection");
       }
 
       #endregion Resume the connection
