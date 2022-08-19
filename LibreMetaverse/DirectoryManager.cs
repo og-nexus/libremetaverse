@@ -287,21 +287,21 @@ namespace OpenMetaverse
             /// <summary>The unique dataserver parcel ID</summary>
             /// <remarks>This id is used to obtain additional information from the entry
             /// by using the <see cref="ParcelManager.InfoRequest"/> method</remarks>
-            public UUID ID;
+            public UUID ID { get; set; }
             /// <summary>A string containing the name of the parcel</summary>
-            public string Name;
+            public string Name { get; set; }
             /// <summary>The size of the parcel</summary>
             /// <remarks>This field is not returned for Places searches</remarks>
-            public int ActualArea;
+            public int ActualArea { get; set; }
             /// <summary>The price of the parcel</summary>
             /// <remarks>This field is not returned for Places searches</remarks>
-            public int SalePrice;
+            public int SalePrice { get; set; }
             /// <summary>If True, this parcel is flagged to be auctioned</summary>
-            public bool Auction;
+            public bool Auction { get; set; }
             /// <summary>If true, this parcel is currently set for sale</summary>
-            public bool ForSale;
+            public bool ForSale { get; set; }
             /// <summary>Parcel traffic</summary>
-            public float Dwell;
+            public float Dwell { get; set; }
 
             /// <summary>Print the struct data as a string</summary>
             /// <returns>A string containing the field name, and field value</returns>
